@@ -25,8 +25,15 @@ __pycache__/
 htmlcov/
 .tox/
 .tox/
-.venv/
-venv/
+## Keep virtualenv folders, but ignore installed packages inside them
+## Windows layout: Scripts/, Lib/, Include/, pyvenv.cfg
+## We keep Scripts/ and config, ignore heavy package dirs
+venv/Lib/site-packages/
+venv/Lib/dist-packages/
+venv/Lib/__pycache__/
+.venv/Lib/site-packages/
+.venv/Lib/dist-packages/
+.venv/Lib/__pycache__/
 ENV/
 env/
 .Python

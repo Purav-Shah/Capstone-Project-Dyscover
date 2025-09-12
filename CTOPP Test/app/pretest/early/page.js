@@ -5,9 +5,9 @@ import { useMemo, useState } from 'react'
 
 const QUESTIONS = [
   // Rhyming: remove the exact same word as in the prompt
-  { type: 'mcq', q: 'Which picture rhymes with “cat”?', options: ['Hat', 'Dog', 'Mall'], correctLabel: 'Hat' },
-  { type: 'mcq', q: 'Which picture rhymes with “sun”?', options: ['Pen', 'Run', 'Fan'], correctLabel: 'Run' },
-  { type: 'mcq', q: 'Which picture rhymes with “ball”?', options: ['Wall', 'Cup', 'Hand'], correctLabel: 'Wall' },
+  { type: 'mcq', q: 'Which word rhymes with “cat”?', options: ['Hat', 'Dog', 'Mall'], correctLabel: 'Hat' },
+  { type: 'mcq', q: 'Which word rhymes with “sun”?', options: ['Pen', 'Run', 'Fan'], correctLabel: 'Run' },
+  { type: 'mcq', q: 'Which word rhymes with “ball”?', options: ['Wall', 'Cup', 'Hand'], correctLabel: 'Wall' },
   { type: 'mcq', q: 'Do these rhyme? “Car – Star”', options: ['Yes', 'No'], correctLabel: 'Yes' },
   { type: 'mcq', q: 'Do these rhyme? “Fish – Dish”', options: ['Yes', 'No'], correctLabel: 'Yes' },
   { type: 'mcq', q: 'Do these rhyme? “Dog – Lot”', options: ['Yes', 'No'], correctLabel: 'No' },
@@ -96,7 +96,7 @@ export default function EarlyPretestPage() {
           <div className="text-xs text-slate-600 mt-2 text-right">{index}/{total}</div>
         </div>
         <div className="bg-white/80 backdrop-blur rounded-2xl shadow-lg p-8 text-center">
-          <h1 className="text-2xl font-semibold mb-6">Early Skills – Ages 3–5</h1>
+          <h1 className="text-2xl font-semibold mb-6">Early Skills</h1>
           <div className="text-lg md:text-xl font-medium text-slate-800 mb-6">{q.q}</div>
           {q.type === 'mcq' ? (
             <div className="flex flex-wrap items-center justify-center gap-4">

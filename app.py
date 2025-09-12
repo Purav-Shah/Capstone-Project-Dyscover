@@ -102,8 +102,12 @@ def transcribe_audio():
                 raise ValueError("Audio file is empty")
             
             # Transcribe using Whisper (same logic as test_whisper.py)
-            logger.info("Starting Whisper transcription...")
-            result = whisper_model.transcribe(temp_path)
+            logger.info("Starting Whisper transcription (forced English)...")
+            result = whisper_model.transcribe(
+                temp_path,
+                language='en',
+                task='transcribe'
+            )
             transcribed_text = result["text"].strip()
             
             logger.info("✅ Transcription successful!")
@@ -173,7 +177,11 @@ def check_pronunciation():
 
             # Transcribe using the same approach as /transcribe
             logger.info("Transcribing pronunciation clip...")
-            result = whisper_model.transcribe(temp_path)
+            result = whisper_model.transcribe(
+                temp_path,
+                language='en',
+                task='transcribe'
+            )
             transcribed_text = (result.get("text") or "").strip().lower()
 
             # Simple scoring: exact token match for target

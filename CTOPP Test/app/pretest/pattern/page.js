@@ -43,7 +43,7 @@ export default function PatternPretestPage(){
 
   useEffect(() => {
     setShowing(true)
-    timerRef.current = setTimeout(() => setShowing(false), 5000)
+    timerRef.current = setTimeout(() => setShowing(false), 100)
     return () => clearTimeout(timerRef.current)
   }, [index])
 
@@ -71,7 +71,7 @@ export default function PatternPretestPage(){
           <div className="text-xs text-slate-600 mt-2 text-right">{index}/{total}</div>
         </div>
         <div className="bg-white/80 backdrop-blur rounded-2xl shadow-lg p-8 text-center">
-          <h1 className="text-2xl font-semibold mb-6">Pattern Identification – Ages 6–8</h1>
+          <h1 className="text-2xl font-semibold mb-6">Pattern Identification</h1>
           {showing ? (
             <div className="text-3xl font-bold tracking-wide text-slate-800">{q.display}</div>
           ) : (

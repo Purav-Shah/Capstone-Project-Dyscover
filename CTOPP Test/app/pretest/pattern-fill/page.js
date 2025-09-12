@@ -62,7 +62,7 @@ export default function PatternFillPretestPage(){
 
   function finish(){
     try { localStorage.setItem('pretest_9_12', JSON.stringify({ type: 'pretest-9-12', score, total, savedAt: new Date().toISOString() })) } catch {}
-    router.push(`/pretest/next-step?${params.toString()}`)
+    router.push(`/pretest/pattern-fill/next-step?${params.toString()}`)
   }
 
   const percent = Math.round((index / total) * 100)
@@ -75,7 +75,7 @@ export default function PatternFillPretestPage(){
           <div className="text-xs text-slate-600 mt-2 text-right">{index}/{total}</div>
         </div>
         <div className="bg-white/80 backdrop-blur rounded-2xl shadow-lg p-8 text-center">
-          <h1 className="text-2xl font-semibold mb-6">Pattern Fill – Ages 9–12</h1>
+          <h1 className="text-2xl font-semibold mb-6">Pattern Fill</h1>
           {showing ? (
             <div className="space-y-6">
               <div className="text-sm text-slate-600">Memorize this pattern</div>

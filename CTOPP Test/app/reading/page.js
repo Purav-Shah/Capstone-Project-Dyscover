@@ -12,6 +12,7 @@ export default function ReadingTestPage() {
   const [transcribedText, setTranscribedText] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
   const [results, setResults] = useState(null)
+  const [canContinue, setCanContinue] = useState(false)
   const mediaRecorderRef = useRef(null)
   const audioChunksRef = useRef([])
   const recordingIntervalRef = useRef(null)
@@ -53,6 +54,13 @@ export default function ReadingTestPage() {
     }
   }, [group])
 
+  // If 3–5, skip this test and go straight to thank-you/results
+  useEffect(() => {
+    if (group === '3-5') {
+      router.replace(`/reading/results?${params.toString()}`)
+    }
+  }, [group, router, params])
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -80,7 +88,8 @@ export default function ReadingTestPage() {
     setIsRecording(false)
     clearInterval(recordingIntervalRef.current)
     const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
-    sendAudioForTranscription(audioBlob)
+    // Transcribe first; navigation will happen after results are displayed
+    try { sendAudioForTranscription(audioBlob) } catch (e) {}
   }
 
   const sendAudioForTranscription = async (audioBlob) => {
@@ -93,6 +102,7 @@ export default function ReadingTestPage() {
       const data = await response.json()
       setTranscribedText(data.transcribed_text)
       calculateResults(data.transcribed_text)
+      setCanContinue(true)
     } catch (e) {
       alert('Transcription failed. Please try again.')
     } finally {
@@ -101,48 +111,55 @@ export default function ReadingTestPage() {
   }
 
   function calculateResults(transcribed) {
+    // Remove punctuation and convert to lowercase for comparison
     const cleanOriginal = originalPassage.toLowerCase().replace(/[.,!?;:]/g, '')
     const cleanTranscribed = (transcribed || '').toLowerCase().replace(/[.,!?;:]/g, '')
+    
     const originalWords = cleanOriginal.split(/\s+/)
     const transcribedWords = cleanTranscribed.split(/\s+/)
-
-    const durationMinutes = Math.max(1, recordingTime) / 60
-    const wpm = Math.round((transcribedWords.length / durationMinutes) * 100) / 100
-
+    
+    // Calculate WPM
+    const durationMinutes = recordingTime / 60
+    const wpm = transcribedWords.length / durationMinutes
+    
+    // Calculate errors
     let errorCount = 0
     let correctWords = 0
     let omittedWords = 0
     let addedWords = 0
+    
+    // Compare word by word
     const maxLength = Math.max(originalWords.length, transcribedWords.length)
+    
     for (let i = 0; i < maxLength; i++) {
       if (i < originalWords.length && i < transcribedWords.length) {
-        if (originalWords[i] === transcribedWords[i]) correctWords++
-        else errorCount++
+        if (originalWords[i] === transcribedWords[i]) {
+          correctWords++
+        } else {
+          errorCount++
+        }
       } else if (i < originalWords.length) {
-        omittedWords++; errorCount++
+        omittedWords++
+        errorCount++
       } else {
-        addedWords++; errorCount++
+        addedWords++
+        errorCount++
       }
     }
-
-    setResults({ wpm, errorCount, correctWords, omittedWords, addedWords, originalWords, transcribedWords, duration: recordingTime })
+    
+    setResults({
+      wpm: Math.round(wpm * 100) / 100,
+      errorCount,
+      correctWords,
+      omittedWords,
+      addedWords,
+      duration: recordingTime,
+      originalWords: originalWords,
+      transcribedWords: transcribedWords
+    })
   }
 
-  if (group === '3-5') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-10 px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white/80 backdrop-blur rounded-2xl shadow-lg p-6 text-center">
-            <h1 className="text-2xl font-semibold mb-2">Audio Reading Test</h1>
-            <p className="text-slate-700">This test is not applicable for ages 3–5.</p>
-            <div className="mt-6">
-              <button className="px-5 py-3 rounded-full bg-blue-600 text-white" onClick={() => router.push('/')}>Go Home</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  if (group === '3-5') return null
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-10 px-4">
@@ -167,6 +184,9 @@ export default function ReadingTestPage() {
                 <h3 className="font-medium mb-2">Transcription</h3>
                 <div className="bg-slate-100 rounded p-3 text-sm text-slate-700">{transcribedText}</div>
               </div>
+            )}
+            {canContinue && (
+              <button onClick={() => router.push(`/reading/results?${params.toString()}`)} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg mt-4">See Results</button>
             )}
           </div>
         </div>

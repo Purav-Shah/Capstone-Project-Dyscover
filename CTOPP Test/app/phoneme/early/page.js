@@ -36,7 +36,7 @@ export default function EarlyPhonemePage(){
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="w-full max-w-3xl bg-white/80 backdrop-blur rounded-2xl shadow-lg p-8 text-center">
-        <h1 className="text-2xl font-semibold mb-6">Phoneme Blending – Ages 3–5</h1>
+        <h1 className="text-2xl font-semibold mb-6">Phoneme Blending</h1>
         <div className="text-4xl tracking-[1.25em] font-bold text-slate-800 mb-6">{item.letters.join(' ')}</div>
         <div className="flex flex-wrap items-center justify-center gap-4">
           {shuffle(item.options).map((opt, i) => (

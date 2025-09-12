@@ -25,7 +25,7 @@ export default function PretestRouterPage() {
 
   if (group === '3-5') router.replace(`/pretest/early?${params.toString()}`)
   else if (group === '6-8') router.replace(`/pretest/pattern?${params.toString()}`)
-  else router.replace(`/pretest/pattern-fill?${params.toString()}`)
+  else router.replace(`/phoneme/speaking-advanced?${params.toString()}`)
 
   return null
 }

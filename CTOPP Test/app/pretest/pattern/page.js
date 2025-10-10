@@ -43,7 +43,7 @@ export default function PatternPretestPage(){
 
   useEffect(() => {
     setShowing(true)
-    timerRef.current = setTimeout(() => setShowing(false), 100)
+    timerRef.current = setTimeout(() => setShowing(false), 5000)
     return () => clearTimeout(timerRef.current)
   }, [index])
 

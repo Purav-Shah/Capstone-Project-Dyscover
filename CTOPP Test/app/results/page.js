@@ -2,7 +2,7 @@
 
 import { useSearchParams, useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
-import { collectAllTestResults } from "../utils/riskCalculator"
+import { collectAllTestResults, calculateDyslexiaRisk, saveRiskAssessment } from "../utils/riskCalculator"
 import { DecisionTreeVisualization } from "../utils/decisionTree.js"
 
 export default function ComprehensiveResultsPage() {
@@ -25,15 +25,15 @@ export default function ComprehensiveResultsPage() {
 
   const loadResults = () => {
     try {
-      // Load comprehensive risk assessment
-      const assessmentData = localStorage.getItem('dyslexiaRiskAssessment')
-      if (assessmentData) {
-        setRiskAssessment(JSON.parse(assessmentData))
-      }
-
       // Load all test results
       const results = collectAllTestResults()
       setTestResults(results)
+
+      // Always compute current overall risk from latest results and demographics
+      const demographics = { age: Number(age), sex }
+      const computed = calculateDyslexiaRisk(results, demographics)
+      saveRiskAssessment(computed)
+      setRiskAssessment(computed)
     } catch (error) {
       console.error('Error loading results:', error)
     }
@@ -58,6 +58,17 @@ export default function ComprehensiveResultsPage() {
       default: return 'text-gray-600 bg-gray-50 border-gray-200'
     }
   }
+
+  // Determine applicable tests by age
+  const getApplicableTests = () => {
+    const a = Number(age)
+    if (a >= 3 && a <= 5) return ['questionnaire', 'pattern']
+    if (a >= 6 && a <= 8) return ['questionnaire', 'phoneme', 'pattern', 'reading']
+    if (a >= 9 && a <= 12) return ['questionnaire', 'phoneme', 'reading', 'nonsense']
+    return ['questionnaire']
+  }
+
+  const applicableTests = getApplicableTests()
 
   return (
     <div
@@ -222,7 +233,7 @@ export default function ComprehensiveResultsPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Questionnaire Results */}
-                {testResults.questionnaire && (
+                {applicableTests.includes('questionnaire') && testResults.questionnaire && (
                   <div className={`p-6 rounded-2xl ${
                     isDarkMode ? "bg-slate-700/50" : "bg-slate-100"
                   }`}>
@@ -247,7 +258,7 @@ export default function ComprehensiveResultsPage() {
                 )}
 
                 {/* Phoneme Results */}
-                {testResults.phoneme && (
+                {applicableTests.includes('phoneme') && testResults.phoneme && (
                   <div className={`p-6 rounded-2xl ${
                     isDarkMode ? "bg-slate-700/50" : "bg-slate-100"
                   }`}>
@@ -270,7 +281,7 @@ export default function ComprehensiveResultsPage() {
                 )}
 
                 {/* Pattern Recognition Results */}
-                {testResults.pattern && (
+                {applicableTests.includes('pattern') && testResults.pattern && (
                   <div className={`p-6 rounded-2xl ${
                     isDarkMode ? "bg-slate-700/50" : "bg-slate-100"
                   }`}>
@@ -293,7 +304,7 @@ export default function ComprehensiveResultsPage() {
                 )}
 
                 {/* Reading Results */}
-                {testResults.reading && (
+                {applicableTests.includes('reading') && testResults.reading && (
                   <div className={`p-6 rounded-2xl ${
                     isDarkMode ? "bg-slate-700/50" : "bg-slate-100"
                   }`}>
@@ -316,7 +327,7 @@ export default function ComprehensiveResultsPage() {
                 )}
 
                 {/* Nonsense Word Results */}
-                {testResults.nonsense && (
+                {applicableTests.includes('nonsense') && testResults.nonsense && (
                   <div className={`p-6 rounded-2xl ${
                     isDarkMode ? "bg-slate-700/50" : "bg-slate-100"
                   }`}>
@@ -346,7 +357,7 @@ export default function ComprehensiveResultsPage() {
             <div className="mb-8">
               <div 
                 dangerouslySetInnerHTML={{ 
-                  __html: DecisionTreeVisualization({ testResults, riskAssessment })?.html || '' 
+                  __html: DecisionTreeVisualization({ testResults, riskAssessment, applicableTests })?.html || '' 
                 }} 
               />
             </div>

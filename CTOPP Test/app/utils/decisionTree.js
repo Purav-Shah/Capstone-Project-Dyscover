@@ -1,15 +1,21 @@
 // Decision Tree Visualization Component
 // Shows the decision-making process for dyslexia risk assessment
 
-export function DecisionTreeVisualization({ testResults, riskAssessment }) {
+export function DecisionTreeVisualization({ testResults, riskAssessment, applicableTests }) {
   if (!testResults || !riskAssessment) return null;
 
-  const decisionNodes = [
+  const include = (id) => {
+    if (!applicableTests || applicableTests.length === 0) return true;
+    return applicableTests.includes(id);
+  };
+
+  const baseNodes = [
     {
       id: 'root',
       title: 'Dyslexia Risk Assessment',
       description: 'Comprehensive evaluation based on multiple test results',
-      type: 'root'
+      type: 'root',
+      condition: ''
     },
     {
       id: 'questionnaire',
@@ -54,6 +60,12 @@ export function DecisionTreeVisualization({ testResults, riskAssessment }) {
       type: 'result'
     }
   ];
+
+  // Filter out inapplicable test nodes
+  const decisionNodes = baseNodes.filter(node => {
+    if (['root', 'composite', 'decision'].includes(node.id)) return true;
+    return include(node.id);
+  });
 
   const getNodeColor = (node) => {
     switch (node.type) {
@@ -104,7 +116,6 @@ export function DecisionTreeVisualization({ testResults, riskAssessment }) {
               <div>
                 <h4 class="font-semibold">${node.title}</h4>
                 <p class="text-sm opacity-75">${node.description || node.condition}</p>
-                ${node.threshold ? `<p class="text-xs mt-1 opacity-60">Threshold: ${node.threshold}</p>` : ''}
               </div>
               <div class="text-right">
                 <div class="text-lg font-bold">${node.condition}</div>
@@ -260,22 +271,22 @@ function classifyFinalRisk(decisionTreeResult, compositeScore, ageGroup) {
   let riskLevel;
   let confidence = 'medium';
   
-  // Decision tree logic
+  // Decision tree logic (higher composite => lower risk)
   if (decisionTreeResult.totalHighRisk >= 2) {
     riskLevel = 'High Risk';
     confidence = 'high';
   } else if (decisionTreeResult.totalHighRisk >= 1 || decisionTreeResult.totalMediumRisk >= 2) {
     riskLevel = 'Medium Risk';
     confidence = 'medium';
-  } else if (compositeScore > thresholds.high) {
-    riskLevel = 'High Risk';
-    confidence = 'medium';
-  } else if (compositeScore > thresholds.medium) {
+  } else if (compositeScore >= thresholds.high) {
+    riskLevel = 'Low Risk';
+    confidence = 'high';
+  } else if (compositeScore >= thresholds.medium) {
     riskLevel = 'Medium Risk';
     confidence = 'medium';
   } else {
-    riskLevel = 'Low Risk';
-    confidence = 'high';
+    riskLevel = 'High Risk';
+    confidence = 'medium';
   }
   
   return {
@@ -343,9 +354,10 @@ function normalizeTestScores(testResults, ageGroup) {
 
 function getWeightsForAgeGroup(ageGroup) {
   const weightProfiles = {
-    '3-5': { questionnaire: 0.4, phoneme: 0.3, pattern: 0.2, reading: 0.1, nonsense: 0.0 },
-    '6-8': { questionnaire: 0.3, phoneme: 0.25, pattern: 0.2, reading: 0.2, nonsense: 0.05 },
-    '9-12': { questionnaire: 0.25, phoneme: 0.2, pattern: 0.15, reading: 0.3, nonsense: 0.1 }
+    // Emphasize skill measures; reduce questionnaire influence
+    '3-5': { questionnaire: 0.2, phoneme: 0.4, pattern: 0.4, reading: 0.0, nonsense: 0.0 },
+    '6-8': { questionnaire: 0.15, phoneme: 0.35, pattern: 0.2, reading: 0.3, nonsense: 0.0 },
+    '9-12': { questionnaire: 0.1, phoneme: 0.3, pattern: 0.1, reading: 0.45, nonsense: 0.05 }
   };
   return weightProfiles[ageGroup] || weightProfiles['6-8'];
 }
@@ -406,6 +418,8 @@ function getRecommendations(riskLevel, ageGroup) {
   };
   return recommendations[riskLevel] || recommendations['Low Risk'];
 }
+
+
 
 
 

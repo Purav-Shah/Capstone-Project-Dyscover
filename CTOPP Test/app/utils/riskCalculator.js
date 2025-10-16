@@ -73,27 +73,10 @@ function normalizeTestScores(testResults, ageGroup) {
  */
 function getWeightsForAgeGroup(ageGroup) {
   const weightProfiles = {
-    '3-5': {
-      questionnaire: 0.4,  // High weight for early screening
-      phoneme: 0.3,        // Important for early detection
-      pattern: 0.2,        // Visual processing
-      reading: 0.1,        // Limited reading ability at this age
-      nonsense: 0.0        // Not typically administered
-    },
-    '6-8': {
-      questionnaire: 0.3,  // Still important
-      phoneme: 0.25,       // Critical for reading development
-      pattern: 0.2,        // Visual processing
-      reading: 0.2,        // More important as reading develops
-      nonsense: 0.05        // Emerging importance
-    },
-    '9-12': {
-      questionnaire: 0.25, // Important but other tests more reliable
-      phoneme: 0.2,        // Still relevant
-      pattern: 0.15,       // Less critical
-      reading: 0.3,        // Most important indicator
-      nonsense: 0.1        // Important for phonological processing
-    }
+    // Emphasize skill measures; reduce questionnaire influence
+    '3-5': { questionnaire: 0.2, phoneme: 0.4, pattern: 0.4, reading: 0.0, nonsense: 0.0 },
+    '6-8': { questionnaire: 0.15, phoneme: 0.35, pattern: 0.2, reading: 0.3, nonsense: 0.0 },
+    '9-12': { questionnaire: 0.1, phoneme: 0.3, pattern: 0.1, reading: 0.45, nonsense: 0.05 }
   };
   
   return weightProfiles[ageGroup] || weightProfiles['6-8'];

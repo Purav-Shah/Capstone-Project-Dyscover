@@ -118,8 +118,8 @@ export default function ReadingTestPage() {
     const originalWords = cleanOriginal.split(/\s+/)
     const transcribedWords = cleanTranscribed.split(/\s+/)
     
-    // Calculate WPM
-    const durationMinutes = recordingTime / 60
+    // Calculate WPM (guard against zero duration)
+    const durationMinutes = Math.max(0.001, recordingTime / 60)
     const wpm = transcribedWords.length / durationMinutes
     
     // Calculate errors
@@ -147,7 +147,7 @@ export default function ReadingTestPage() {
       }
     }
     
-    setResults({
+    const computed = {
       wpm: Math.round(wpm * 100) / 100,
       errorCount,
       correctWords,
@@ -156,7 +156,20 @@ export default function ReadingTestPage() {
       duration: recordingTime,
       originalWords: originalWords,
       transcribedWords: transcribedWords
-    })
+    }
+
+    setResults(computed)
+
+    try {
+      // Persist minimal summary for results and risk calculator
+      localStorage.setItem('readingResult', JSON.stringify({
+        wpm: computed.wpm,
+        errorCount: computed.errorCount,
+        correctWords: computed.correctWords
+      }))
+    } catch (_) {
+      // ignore storage errors
+    }
   }
 
   if (group === '3-5') return null

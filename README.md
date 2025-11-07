@@ -205,8 +205,6 @@ The XGBoost model uses 5 features:
 - Learning Rate: 0.07
 - Regularization: L2 (lambda=1.0)
 
-**Note**: Currently trained but not integrated into live predictions. The system uses rule-based decision tree logic.
-
 ### Gemini AI Recommendations
 
 - **API**: Google Gemini 2.0 Flash
@@ -228,7 +226,7 @@ The XGBoost model uses 5 features:
 - **ASR**: OpenAI Whisper (medium model)
 - **Database**: MongoDB (via pymongo)
 - **CORS**: Flask-CORS
-- **ML**: XGBoost (for training)
+- **ML**: XGBoost
 
 ### AI/ML
 - **Speech Recognition**: Whisper-medium (fine-tuned for Indian English)
@@ -330,7 +328,6 @@ This generates:
 
 ## 🔮 Future Enhancements
 
-- [ ] Integrate XGBoost model for live predictions
 - [ ] Add longitudinal progress tracking
 - [ ] Export PDF reports
 - [ ] Multi-language support

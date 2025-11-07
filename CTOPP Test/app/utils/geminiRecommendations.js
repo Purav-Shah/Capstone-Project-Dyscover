@@ -1,6 +1,6 @@
 // Gemini API integration for personalized recommendations
 
-const GEMINI_API_KEY = 'AIzaSyDLeHYz-zuhgbVI3JPUkBmBNHGTHlbM8Gk';
+const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || '';
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
 /**
@@ -82,6 +82,12 @@ function analyzeWeakAreas(testResults, normalizedScores, ageGroup) {
  */
 export async function generatePersonalizedRecommendations(testResults, riskAssessment, demographics) {
   try {
+    // Check if API key is configured
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === '') {
+      console.warn('Gemini API key not configured. Skipping personalized recommendations.');
+      return null;
+    }
+
     const age = demographics.age;
     const ageGroup = getAgeGroup(age);
     const normalizedScores = riskAssessment.breakdown || {};

@@ -264,10 +264,14 @@ MONGO_DB=dyscover
 
 ### Gemini API Key
 
-Update in `CTOPP Test/app/utils/geminiRecommendations.js`:
-```javascript
-const GEMINI_API_KEY = 'your-api-key-here';
+1. Get your API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Create `.env.local` file in `CTOPP Test/` directory:
+```env
+NEXT_PUBLIC_GEMINI_API_KEY=your-gemini-api-key-here
 ```
+3. Restart the Next.js dev server after adding the key
+
+**Important**: Never commit `.env.local` to git - it's already in `.gitignore`
 
 ## 🐛 Troubleshooting
 

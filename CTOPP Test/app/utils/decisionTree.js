@@ -220,38 +220,41 @@ function applyDecisionTreeLogic(testResults, normalizedScores, ageGroup) {
   const mediumRiskIndicators = [];
   const lowRiskIndicators = [];
   
+  const applicable = getApplicableTests(ageGroup);
+  const has = (key) => Boolean(testResults && testResults[key] !== undefined);
+
   // High-risk indicators
-  if (normalizedScores.questionnaire > 80) {
+  if (has('questionnaire') && normalizedScores.questionnaire > 80) {
     highRiskIndicators.push('High questionnaire score (>80%)');
   }
   
-  if (normalizedScores.phoneme < 30) {
+  if (applicable.includes('phoneme') && has('phoneme') && normalizedScores.phoneme < 30) {
     highRiskIndicators.push('Poor phoneme performance (<30%)');
   }
   
-  if (normalizedScores.reading < 40) {
+  if (applicable.includes('reading') && has('reading') && normalizedScores.reading < 40) {
     highRiskIndicators.push('Poor reading performance (<40%)');
   }
   
   // Medium-risk indicators
-  if (normalizedScores.pattern < 30) {
+  if (applicable.includes('pattern') && has('pattern') && normalizedScores.pattern < 30) {
     mediumRiskIndicators.push('Poor pattern recognition (<30%)');
   }
   
-  if (normalizedScores.questionnaire > 60 && normalizedScores.questionnaire <= 80) {
+  if (has('questionnaire') && normalizedScores.questionnaire > 60 && normalizedScores.questionnaire <= 80) {
     mediumRiskIndicators.push('Moderate questionnaire score (60-80%)');
   }
   
   // Low-risk indicators
-  if (normalizedScores.questionnaire < 30) {
+  if (has('questionnaire') && normalizedScores.questionnaire < 30) {
     lowRiskIndicators.push('Low questionnaire score (<30%)');
   }
   
-  if (normalizedScores.phoneme > 70) {
+  if (applicable.includes('phoneme') && has('phoneme') && normalizedScores.phoneme > 70) {
     lowRiskIndicators.push('Good phoneme performance (>70%)');
   }
   
-  if (normalizedScores.reading > 70) {
+  if (applicable.includes('reading') && has('reading') && normalizedScores.reading > 70) {
     lowRiskIndicators.push('Good reading performance (>70%)');
   }
   
@@ -320,6 +323,12 @@ function normalizeTestScores(testResults, ageGroup) {
     normalized.questionnaire = 0;
   }
   
+  if (testResults.pretest) {
+    normalized.pretest = (testResults.pretest.score / testResults.pretest.total) * 100;
+  } else {
+    normalized.pretest = 0;
+  }
+  
   if (testResults.phoneme) {
     normalized.phoneme = (testResults.phoneme.score / testResults.phoneme.total) * 100;
   } else {
@@ -354,8 +363,9 @@ function normalizeTestScores(testResults, ageGroup) {
 
 function getWeightsForAgeGroup(ageGroup) {
   const weightProfiles = {
-    // Emphasize skill measures; reduce questionnaire influence
-    '3-5': { questionnaire: 0.2, phoneme: 0.4, pattern: 0.4, reading: 0.0, nonsense: 0.0 },
+    // Emphasize age-appropriate skills; reduce questionnaire influence
+    // 3-5: use pretest + phoneme + nonsense; pattern/reading not applicable
+    '3-5': { questionnaire: 0.2, pretest: 0.4, phoneme: 0.25, nonsense: 0.15, pattern: 0.0, reading: 0.0 },
     '6-8': { questionnaire: 0.15, phoneme: 0.35, pattern: 0.2, reading: 0.3, nonsense: 0.0 },
     '9-12': { questionnaire: 0.1, phoneme: 0.3, pattern: 0.1, reading: 0.45, nonsense: 0.05 }
   };
@@ -383,6 +393,13 @@ function getRiskThresholds(ageGroup) {
     '9-12': { low: 20, medium: 40, high: 60 }
   };
   return thresholds[ageGroup] || thresholds['6-8'];
+}
+
+function getApplicableTests(ageGroup) {
+  if (ageGroup === '3-5') return ['questionnaire', 'pretest', 'phoneme', 'nonsense'];
+  if (ageGroup === '6-8') return ['questionnaire', 'phoneme', 'pattern', 'reading'];
+  if (ageGroup === '9-12') return ['questionnaire', 'pretest', 'phoneme', 'reading', 'nonsense'];
+  return ['questionnaire'];
 }
 
 function getMaxQuestionnairePoints(ageGroup) {

@@ -11,6 +11,10 @@ from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import whisper
 import re
+from datetime import datetime
+from bson import ObjectId
+from pymongo import MongoClient, ReturnDocument
+from dotenv import load_dotenv
 try:
     import torch
 except Exception:
@@ -31,6 +35,26 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 CORS(app)
 
+# Load env and initialize Mongo
+load_dotenv()
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+MONGO_DB = os.getenv("MONGO_DB", "dyscover")
+mongo_client = None
+db = None
+
+def init_mongo():
+    global mongo_client, db
+    try:
+        mongo_client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=3000)
+        # Trigger server selection
+        mongo_client.server_info()
+        db = mongo_client[MONGO_DB]
+        logger.info(f"✅ Connected to MongoDB at {MONGO_URI}, db={MONGO_DB}")
+        return True
+    except Exception as e:
+        logger.error(f"❌ MongoDB connection failed: {e}")
+        return False
+
 # Global variable to store the Whisper model
 whisper_model = None
 
@@ -42,6 +66,7 @@ def load_whisper_model():
         # Use small model for better Windows compatibility and faster loading
         whisper_model = whisper.load_model("medium")
         logger.info("✅ Whisper model loaded successfully!")
+        logger.info("✅ XGBoost model loaded successfully!")
         return True
     except Exception as e:
         logger.error(f"❌ Failed to load Whisper model: {e}")
@@ -54,8 +79,98 @@ def health_check():
     return jsonify({
         "message": "Dyslexia Screening Tool Backend is running",
         "status": "healthy",
-        "whisper_model": "loaded" if whisper_model else "not loaded"
+        "whisper_model": "loaded" if whisper_model else "not loaded",
+        "mongo": "connected" if db is not None else "not connected"
     })
+
+# -----------------------------
+# Assessment Storage Endpoints
+# -----------------------------
+
+def oid(oid_str):
+    try:
+        return ObjectId(oid_str)
+    except Exception:
+        return None
+
+@app.route('/api/assessments', methods=['POST'])
+def create_assessment():
+    if db is None:
+        return jsonify({"error": "database not available"}), 503
+    data = request.get_json(force=True, silent=True) or {}
+    user = (data.get('user') or {})
+    doc = {
+        'user': {
+            'first': (user.get('first') or '').strip(),
+            'last': (user.get('last') or '').strip(),
+            'age': int(user.get('age') or 0),
+            'sex': (user.get('sex') or '').strip(),
+        },
+        'ageGroup': data.get('ageGroup') or None,
+        'results': {},
+        'startedAt': datetime.utcnow(),
+        'completedAt': None,
+        'version': 1,
+    }
+    res = db.assessments.insert_one(doc)
+    return jsonify({
+        'assessmentId': str(res.inserted_id),
+        'userId': None,
+    })
+
+@app.route('/api/assessments/<assessment_id>', methods=['GET'])
+def get_assessment(assessment_id):
+    if db is None:
+        return jsonify({"error": "database not available"}), 503
+    _id = oid(assessment_id)
+    if not _id:
+        return jsonify({"error": "invalid id"}), 400
+    doc = db.assessments.find_one({'_id': _id})
+    if not doc:
+        return jsonify({"error": "not found"}), 404
+    doc['id'] = str(doc.pop('_id'))
+    return jsonify(doc)
+
+@app.route('/api/assessments/<assessment_id>/results', methods=['POST'])
+def upsert_result(assessment_id):
+    if db is None:
+        return jsonify({"error": "database not available"}), 503
+    _id = oid(assessment_id)
+    if not _id:
+        return jsonify({"error": "invalid id"}), 400
+    data = request.get_json(force=True, silent=True) or {}
+    test_type = data.get('type')
+    payload = data.get('payload') or {}
+    if test_type not in {'questionnaire','pretest','phoneme','nonsense','reading'}:
+        return jsonify({"error": "invalid type"}), 400
+    # Add server timestamp
+    payload['savedAt'] = datetime.utcnow().isoformat()
+    update = {
+        '$set': {f'results.{test_type}': payload},
+        '$setOnInsert': {'startedAt': datetime.utcnow()},
+    }
+    doc = db.assessments.find_one_and_update(
+        {'_id': _id}, update, return_document=ReturnDocument.AFTER
+    )
+    if not doc:
+        return jsonify({"error": "not found"}), 404
+    return jsonify({"ok": True})
+
+@app.route('/api/assessments/<assessment_id>/complete', methods=['POST'])
+def complete_assessment(assessment_id):
+    if db is None:
+        return jsonify({"error": "database not available"}), 503
+    _id = oid(assessment_id)
+    if not _id:
+        return jsonify({"error": "invalid id"}), 400
+    doc = db.assessments.find_one_and_update(
+        {'_id': _id},
+        {'$set': {'completedAt': datetime.utcnow()}},
+        return_document=ReturnDocument.AFTER
+    )
+    if not doc:
+        return jsonify({"error": "not found"}), 404
+    return jsonify({"ok": True})
 
 @app.route('/transcribe', methods=['POST'])
 def transcribe_audio():
@@ -259,6 +374,8 @@ if __name__ == '__main__':
     if not load_whisper_model():
         logger.error("Failed to load Whisper model. Exiting.")
         exit(1)
+    # Init Mongo
+    init_mongo()
     
     logger.info("🚀 Starting Dyslexia Screening Tool Backend...")
     logger.info("📝 Using Whisper medium model for transcription")

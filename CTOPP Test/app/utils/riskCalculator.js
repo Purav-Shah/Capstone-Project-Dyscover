@@ -251,7 +251,7 @@ export function collectAllTestResults() {
     if (pretest35) {
       const parsed = JSON.parse(pretest35);
       if (parsed && parsed.score !== undefined && parsed.total !== undefined) {
-        results.pattern = parsed;
+        results.pretest = parsed; // show separately for 3-5
       }
     }
     
@@ -264,6 +264,24 @@ export function collectAllTestResults() {
       }
     }
     
+    // Pretest results (age 9-12)
+    const pretest912 = localStorage.getItem('pretest_9_12');
+    if (pretest912) {
+      const parsed = JSON.parse(pretest912);
+      if (parsed && parsed.score !== undefined && parsed.total !== undefined) {
+        results.pretest = parsed; // show separately for 9-12
+      }
+    }
+    
+    // Phoneme results (age 3-5)
+    const phoneme35 = localStorage.getItem('phoneme_3_5');
+    if (phoneme35) {
+      const parsed = JSON.parse(phoneme35);
+      if (parsed && parsed.score !== undefined && parsed.total !== undefined) {
+        results.phoneme = parsed;
+      }
+    }
+
     // Phoneme results (age 6-8)
     const phoneme68 = localStorage.getItem('phoneme_6_8');
     if (phoneme68) {
@@ -291,9 +309,27 @@ export function collectAllTestResults() {
       }
     }
     
-    // Nonsense word results (if available)
+    // Nonsense word results (3-5)
+    const nonsense35 = localStorage.getItem('nonsense_3_5');
+    if (nonsense35) {
+      const parsed = JSON.parse(nonsense35);
+      if (parsed && parsed.score !== undefined && parsed.total !== undefined) {
+        results.nonsense = parsed;
+      }
+    }
+
+    // Nonsense word results (6-8)
+    const nonsense68 = localStorage.getItem('nonsense_6_8');
+    if (nonsense68) {
+      const parsed = JSON.parse(nonsense68);
+      if (parsed && parsed.score !== undefined && parsed.total !== undefined) {
+        results.nonsense = parsed;
+      }
+    }
+
+    // Generic nonsense fallback (if any older key)
     const nonsenseData = localStorage.getItem('nonsenseResult');
-    if (nonsenseData) {
+    if (!results.nonsense && nonsenseData) {
       const parsed = JSON.parse(nonsenseData);
       if (parsed && parsed.score !== undefined && parsed.total !== undefined) {
         results.nonsense = parsed;

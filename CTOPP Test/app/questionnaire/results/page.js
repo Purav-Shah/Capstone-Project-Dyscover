@@ -174,8 +174,19 @@ export default function QuestionnaireResultsPage() {
             </button>
             <button
               className="bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold py-3 px-6 rounded-2xl transition-all duration-300 hover:from-blue-700 hover:to-purple-700 hover:scale-105 hover:shadow-xl focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transform active:scale-95"
-              // onClick={() =>
-                onClick={() => router.push(`/questionnaire/next-step?${new URLSearchParams({ first, last, age, sex, group, score: String(score), level }).toString()}`)}
+              onClick={() =>
+                router.push(
+                  `/questionnaire/next-step?${new URLSearchParams({
+                    first,
+                    last,
+                    age,
+                    sex,
+                    group,
+                    score: String(score),
+                    level,
+                  }).toString()}`,
+                )
+              }
             >
               Continue to next step →
             </button>

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
+import { getInitialDarkMode, setDarkMode } from "../utils/theme"
 
 export default function QuestionnaireIntroPage() {
   const router = useRouter()
@@ -14,11 +15,15 @@ export default function QuestionnaireIntroPage() {
 
   useEffect(() => {
     setIsVisible(true)
+    setIsDarkMode(getInitialDarkMode())
   }, [])
 
   function handleStart(e) {
     e.preventDefault()
     if (!firstName || !lastName || !age || !sex) return
+    try {
+      window.localStorage.removeItem("assessmentId")
+    } catch {}
     const params = new URLSearchParams({
       first: firstName,
       last: lastName,
@@ -29,7 +34,9 @@ export default function QuestionnaireIntroPage() {
   }
 
   const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode)
+    const next = !isDarkMode
+    setIsDarkMode(next)
+    setDarkMode(next)
   }
 
   return (
@@ -288,7 +295,7 @@ export default function QuestionnaireIntroPage() {
           className={`flex items-center justify-between transition-all duration-1000 delay-700 ${isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"}`}
         >
           <div className={`flex items-center space-x-6 text-sm ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-            <span>© 2024 Dyscover</span>
+            <span>© 2025 Dyscover</span>
             <a href="#" className="hover:text-blue-600 transition-colors">
               Privacy
             </a>

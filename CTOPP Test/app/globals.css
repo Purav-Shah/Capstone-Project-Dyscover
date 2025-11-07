@@ -2,3 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
+/* App-wide theme */
+:root {
+  --bg-start: 248 250 252; /* slate-50 */
+  --bg-mid: 239 246 255;   /* blue-50 */
+  --bg-end: 238 242 255;   /* indigo-100 */
+  --text-color: 15 23 42;  /* slate-900 */
+}
+
+.app-theme {
+  min-height: 100vh;
+  color: rgb(var(--text-color));
+  background-image: linear-gradient(to bottom right,
+    rgb(var(--bg-start)),
+    rgb(var(--bg-mid)),
+    rgb(var(--bg-end))
+  );
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Print support */
+@media print {
+  @page { margin: 12mm; }
+  html, body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    color-adjust: exact;
+    background: #ffffff !important;
+  }
+  /* Remove gradients for legibility on print */
+  .bg-gradient-to-br { background-image: none !important; }
+  /* Ensure translucent panels print as solid white */
+  .bg-white\/80, .bg-white\/70, .bg-white { background-color: #ffffff !important; }
+  /* Hide non-essential UI */
+  .no-print { display: none !important; }
+}
+

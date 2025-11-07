@@ -87,16 +87,16 @@ Pseudowords	94.1	5.6	7.9
 Oral Reading	91.3	7.8	10.5
 E. Model Performance
 Metric	Value
-AUROC	0.950 (OvR)
-Accuracy (%)	97.21
-Sensitivity (%)	97.21 (weighted recall)
-Specificity (%)	98.60 (macro)
-Precision (%)	97.21 (weighted)
+AUROC	0.9883 (OvR)
+Accuracy (%)	93.52
+Sensitivity (%)	93.52 (weighted recall)
+Specificity (%)	96.76 (macro)
+Precision (%)	93.52 (weighted)
 F. Confusion Matrix (Placeholder):
 	Predicted Low	Predicted Medium	Predicted High
-Actual Low	158	3	6
-Actual Medium	0	166	0
-Actual High	4	1	163
+Actual Low	188	4	9
+Actual Medium	6	190	4
+Actual High	8	8	185
 G. Example Output Report
 Insert a clean screenshot or mock-up of the parent-facing report showing:
 •	Domain-wise performance

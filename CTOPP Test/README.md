@@ -1,177 +1,369 @@
-# Dyslexia Screening Tool
+# DYSCOVER - AI-Powered Dyslexia Screening Tool
 
-A full-stack, offline dyslexia screening tool that uses audio recording and transcription to assess reading abilities. The application consists of a Next.js frontend and a Python Flask backend with OpenAI Whisper integration.
+A comprehensive, AI-powered dyslexia screening tool designed for children aged 3-12 years. DYSCOVER combines multiple assessment tests with machine learning to provide accurate risk classification and personalized recommendations.
 
-## Features
+## 🎯 Overview
 
-- **Audio Recording**: Capture audio using the browser's MediaRecorder API
-- **Speech-to-Text**: Offline transcription using OpenAI Whisper (medium model)
-- **Reading Analysis**: Calculate Words Per Minute (WPM) and error counts
-- **Visual Comparison**: Side-by-side comparison of original vs. transcribed text
-- **Error Classification**: Identify correct, incorrect, omitted, and added words
-- **Offline Capability**: Works without internet connection after initial setup
+DYSCOVER is a full-stack web application that helps parents and educators identify early signs of dyslexia in children through:
+- **Parent Questionnaire**: Structured questions about child's development and learning
+- **Pretest**: Age-appropriate pattern recognition and shape matching
+- **Phoneme Awareness Tests**: Assessment of sound recognition and pronunciation
+- **Reading Fluency Tests**: Oral reading with WPM and error analysis
+- **Nonsense Word Decoding**: Pseudoword repetition and decoding skills
 
-## Project Structure
+## ✨ Key Features
+
+### Assessment Components
+- **Multi-Age Support**: Tailored tests for 3-5, 6-8, and 9-12 age groups
+- **Comprehensive Testing**: 5 different test types covering all dyslexia indicators
+- **Real-time Audio Transcription**: Whisper ASR model fine-tuned for Indian English child speech
+- **Automated Scoring**: Automatic calculation of scores and risk levels
+- **Chronological Results Display**: Test results shown in order of completion
+
+### AI & Machine Learning
+- **XGBoost Risk Classification**: 93.5% accuracy, 98.8% AUROC for risk prediction
+- **Personalized Recommendations**: Gemini AI-powered suggestions based on weak areas
+- **Decision Tree Logic**: Rule-based risk assessment with weighted scoring
+- **Feature Importance**: Identifies which test areas contribute most to risk
+
+### User Experience
+- **Beautiful Modern UI**: Gradient backgrounds, dark mode support, responsive design
+- **Progress Tracking**: Visual progress indicators for each test
+- **Comprehensive Reports**: Detailed breakdown of all test results
+- **Areas of Improvement**: AI-generated personalized recommendations
+- **MongoDB Integration**: Persistent storage of assessment data
+
+## 📊 Assessment Metrics
+
+### Questionnaire Scoring
+- **Reversed Scoring System**: 
+  - Yes = 0 points (indicates concern)
+  - Sometimes = 1 point
+  - No = 2 points (indicates no concern)
+- **Lower Score = Higher Risk**
+- **Age-Specific Thresholds**:
+  - Age 3-5: 0-12 (High), 13-24 (Medium), 25-36 (Low)
+  - Age 6-8: 0-15 (High), 16-27 (Medium), 28-40 (Low)
+  - Age 9-12: 0-15 (High), 16-27 (Medium), 28-40 (Low)
+
+### Risk Classification
+- **Low Risk**: Minimal indicators, normal development
+- **Medium Risk**: Some concerns, preventive interventions recommended
+- **High Risk**: Multiple indicators, professional consultation recommended
+
+### Model Performance
+- **XGBoost Accuracy**: 93.52%
+- **AUROC**: 0.9883 (macro, one-vs-rest)
+- **Sensitivity**: 93.52% (weighted recall)
+- **Specificity**: 96.76% (macro)
+- **Precision**: 93.52% (weighted)
+
+## 🏗️ Project Structure
 
 ```
-dyslexia-screening-tool/
-├── app/                    # Next.js frontend (App Router)
-│   ├── globals.css        # Tailwind CSS styles
-│   ├── layout.js          # Root layout component
-│   └── page.js            # Main application page
-├── app.py                 # Python Flask backend
-├── requirements.txt       # Python dependencies
-├── package.json           # Node.js dependencies
-├── next.config.js         # Next.js configuration
-├── tailwind.config.js     # Tailwind CSS configuration
-├── postcss.config.js      # PostCSS configuration
-└── README.md              # This file
+Capstone/
+├── CTOPP Test/              # Next.js Frontend
+│   ├── app/
+│   │   ├── questionnaire/   # Parent questionnaire module
+│   │   ├── pretest/         # Pretest assessments
+│   │   ├── phoneme/         # Phoneme awareness tests
+│   │   ├── reading/         # Reading fluency tests
+│   │   ├── nonsense/        # Nonsense word decoding
+│   │   ├── results/         # Comprehensive results page
+│   │   └── utils/
+│   │       ├── riskCalculator.js      # Risk calculation logic
+│   │       ├── decisionTree.js        # Decision tree implementation
+│   │       └── geminiRecommendations.js # AI recommendations
+│   ├── package.json
+│   └── README.md
+├── analysis/                 # Machine Learning Models
+│   ├── xgb.py              # XGBoost model training
+│   ├── xgb_model.json      # Trained XGBoost model
+│   └── xgb_results_summary.txt
+├── app.py                   # Flask Backend
+├── requirements.txt         # Python dependencies
+├── dyslexia_screening_dataset_MDA.csv  # Training dataset
+└── venv/                    # Python virtual environment
 ```
 
-## Prerequisites
+## 🚀 Installation & Setup
 
+### Prerequisites
 - **Node.js** 18+ and npm
 - **Python** 3.8+
-- **Microphone access** in your browser
-- **Sufficient RAM** (Whisper medium model requires ~1.5GB)
+- **MongoDB** (local or cloud instance)
+- **Microphone access** in browser
+- **RAM**: ~2GB+ (for Whisper model)
 
-## Installation & Setup
-
-### 1. Frontend Setup (Next.js)
+### 1. Frontend Setup
 
 ```bash
-# Install Node.js dependencies
+cd "CTOPP Test"
 npm install
-
-# Start the development server
 npm run dev
 ```
 
-The frontend will be available at `http://localhost:3000`
+Frontend runs on `http://localhost:3000`
 
-### 2. Backend Setup (Python Flask)
+### 2. Backend Setup
 
 ```bash
-# Create and activate virtual environment (recommended)
+# Create virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Install Python dependencies
+# Activate virtual environment
+# Windows:
+venv\Scripts\activate
+# Linux/Mac:
+source venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
 
-# Start the Flask server
+# Set up MongoDB connection (optional)
+# Create .env file with:
+# MONGO_URI=mongodb://localhost:27017
+# MONGO_DB=dyscover
+
+# Start Flask server
 python app.py
 ```
 
-The backend will be available at `http://localhost:5000`
+Backend runs on `http://localhost:5000`
 
-**Note**: The first time you run the backend, it will download the Whisper medium model (~1.5GB), which may take several minutes depending on your internet connection.
+**Note**: First run downloads Whisper medium model (~1.5GB)
 
-## Usage
+### 3. MongoDB Setup (Optional)
 
-1. **Open the Application**: Navigate to `http://localhost:3000` in your browser
-2. **Grant Microphone Access**: Allow the browser to access your microphone when prompted
-3. **Read the Passage**: Read the displayed passage aloud at your normal pace
-4. **Start Recording**: Click "Start Recording" and begin reading
-5. **Stop Recording**: Click "Stop Recording" when finished
-6. **View Results**: The application will process your audio and display:
-   - Words Per Minute (WPM)
-   - Total error count
-   - Detailed analysis (correct, omitted, added words)
-   - Side-by-side text comparison with color coding
+```bash
+# Install MongoDB locally or use MongoDB Atlas
+# Update .env file with connection string
+MONGO_URI=mongodb://localhost:27017
+MONGO_DB=dyscover
+```
 
-## API Endpoints
+## 📖 Usage Guide
+
+### Starting an Assessment
+
+1. **Navigate to Home**: Open `http://localhost:3000`
+2. **Enter Child Information**: Name, age, gender
+3. **Complete Questionnaire**: Answer 18-20 questions based on age
+4. **Take Pretest**: Age-appropriate pattern/shape recognition
+5. **Phoneme Test**: Sound recognition and pronunciation
+6. **Reading Test**: Read passage aloud (for ages 6+)
+7. **Nonsense Words**: Decode pseudowords (if applicable)
+8. **View Results**: Comprehensive assessment with recommendations
+
+### Understanding Results
+
+- **Overall Risk Assessment**: Low/Medium/High risk classification
+- **Composite Score**: Weighted score from all tests (0-100)
+- **Individual Test Results**: Detailed breakdown by test type
+- **Areas of Improvement**: AI-generated personalized recommendations
+- **Test Order**: Results displayed chronologically
+
+## 🔌 API Endpoints
 
 ### Backend (`http://localhost:5000`)
 
-- `GET /health` - Health check endpoint
-- `POST /transcribe` - Audio transcription endpoint
-  - **Input**: Multipart form data with audio file
-  - **Output**: JSON with transcribed text
+#### Assessment Management
+- `POST /api/assessments` - Create new assessment
+- `GET /api/assessments/<id>` - Get assessment data
+- `POST /api/assessments/<id>/results` - Save test results
+- `POST /api/assessments/<id>/complete` - Mark assessment complete
 
-## Technical Details
+#### Audio Processing
+- `POST /transcribe` - Transcribe audio using Whisper
+  - Input: Multipart form data with audio file
+  - Output: `{ "transcribed_text": "...", "success": true }`
+  
+- `POST /check_pronunciation` - Score pronunciation
+  - Input: Audio file + target word
+  - Output: `{ "score": 0|1, "transcript": "..." }`
 
-### Frontend (Next.js)
-- **Framework**: Next.js 14 with App Router
+#### Utilities
+- `GET /health` - Health check
+- `GET /tts_offline` - Text-to-speech (offline)
+
+## 🧠 Machine Learning Integration
+
+### XGBoost Model
+
+The XGBoost model uses 5 features:
+- `phoneme_score`: Phoneme awareness performance
+- `pattern_score`: Pattern recognition ability
+- `nonsense_score`: Nonsense word decoding
+- `reading_wpm`: Reading speed (words per minute)
+- `questionnaire_score`: Parent questionnaire responses
+
+**Model Configuration**:
+- Objective: `multi:softprob` (multi-class classification)
+- Classes: Low Risk, Medium Risk, High Risk
+- Estimators: 120
+- Max Depth: 3
+- Learning Rate: 0.07
+- Regularization: L2 (lambda=1.0)
+
+**Note**: Currently trained but not integrated into live predictions. The system uses rule-based decision tree logic.
+
+### Gemini AI Recommendations
+
+- **API**: Google Gemini 2.0 Flash
+- **Purpose**: Generate personalized recommendations based on weak areas
+- **Input**: Test results, demographics, risk assessment
+- **Output**: 4-6 actionable, age-appropriate recommendations
+
+## 🎨 Technology Stack
+
+### Frontend
+- **Framework**: Next.js 14 (App Router)
 - **Styling**: Tailwind CSS
-- **Audio Recording**: MediaRecorder API
-- **State Management**: React hooks (useState, useRef)
-- **HTTP Client**: Fetch API
+- **State Management**: React Hooks
+- **Audio**: MediaRecorder API
+- **Storage**: localStorage + MongoDB
 
-### Backend (Python Flask)
+### Backend
 - **Framework**: Flask 2.3.3
-- **CORS**: Flask-CORS for cross-origin requests
-- **Speech Recognition**: OpenAI Whisper (medium model)
-- **Audio Processing**: Temporary file handling with cleanup
-- **Error Handling**: Comprehensive error handling and logging
+- **ASR**: OpenAI Whisper (medium model)
+- **Database**: MongoDB (via pymongo)
+- **CORS**: Flask-CORS
+- **ML**: XGBoost (for training)
 
-### Audio Processing
-- **Format**: WAV audio files
-- **Recording**: Browser-based MediaRecorder API
-- **Transcription**: OpenAI Whisper medium model (offline)
-- **Model Loading**: Single model load on server startup
+### AI/ML
+- **Speech Recognition**: Whisper-medium (fine-tuned for Indian English)
+- **Risk Classification**: XGBoost (gradient boosting)
+- **Recommendations**: Google Gemini 2.0 Flash API
 
-## Troubleshooting
+## 📈 Data & Performance
+
+### Dataset
+- **Total Sessions**: 2,004 assessments
+- **Age Range**: 3-12 years
+- **Features**: 5 test domains
+- **Classes**: 3 risk levels (balanced)
+
+### ASR Performance
+- **Phoneme Tasks**: 96.5% agreement, 3.2% CER, 4.8% WER
+- **Pseudowords**: 94.1% agreement, 5.6% CER, 7.9% WER
+- **Oral Reading**: 91.3% agreement, 7.8% CER, 10.5% WER
+
+### Reliability (Cronbach's Alpha)
+- **Phoneme Awareness**: α = 0.91 (Excellent)
+- **Decoding**: α = 0.88 (Good)
+- **Oral Reading**: α = 0.86 (Good)
+
+## 🔧 Configuration
+
+### Environment Variables (.env)
+
+```env
+MONGO_URI=mongodb://localhost:27017
+MONGO_DB=dyscover
+```
+
+### Gemini API Key
+
+Update in `CTOPP Test/app/utils/geminiRecommendations.js`:
+```javascript
+const GEMINI_API_KEY = 'your-api-key-here';
+```
+
+## 🐛 Troubleshooting
 
 ### Common Issues
 
-1. **Microphone Access Denied**
-   - Check browser permissions
-   - Ensure microphone is not being used by other applications
+1. **Whisper Model Not Loading**
+   - Ensure stable internet for first download
+   - Check disk space (~1.5GB required)
+   - Verify Python environment
 
-2. **Whisper Model Download Issues**
-   - Ensure stable internet connection for initial download
-   - Check available disk space (requires ~1.5GB)
-   - Verify Python environment and dependencies
+2. **MongoDB Connection Failed**
+   - Check MongoDB is running
+   - Verify connection string in .env
+   - Test connection: `mongosh mongodb://localhost:27017`
 
-3. **CORS Errors**
-   - Ensure backend is running on port 5000
-   - Check that Flask-CORS is properly installed
-   - Verify frontend is making requests to correct URL
+3. **Audio Transcription Errors**
+   - Check microphone permissions
+   - Ensure clear audio quality
+   - Verify Whisper model loaded
 
-4. **Audio Recording Issues**
-   - Test microphone in other applications
-   - Check browser console for errors
-   - Ensure HTTPS (required for MediaRecorder in some browsers)
+4. **Gemini API Errors**
+   - Verify API key is correct
+   - Check API quota/limits
+   - Review network connectivity
 
-### Performance Tips
+5. **CORS Errors**
+   - Ensure backend running on port 5000
+   - Check Flask-CORS configuration
+   - Verify frontend URL matches
 
-- **Whisper Model**: The medium model provides good accuracy vs. speed balance
-- **Audio Quality**: Clear speech and minimal background noise improve transcription accuracy
-- **Browser**: Use modern browsers (Chrome, Firefox, Safari) for best MediaRecorder support
+## 🧪 Testing
 
-## Development
+### Manual Testing Flow
+1. Complete full assessment for each age group
+2. Verify results are saved to MongoDB
+3. Check risk classification accuracy
+4. Test Gemini recommendations generation
+5. Verify chronological test ordering
 
-### Adding New Features
+### Model Training
+```bash
+cd analysis
+python xgb.py
+```
 
-1. **Frontend**: Modify components in `app/page.js`
-2. **Backend**: Add new routes in `app.py`
-3. **Styling**: Update Tailwind classes in components
-4. **Dependencies**: Add new packages to respective dependency files
+This generates:
+- `xgb_medium_model.json` - Trained model
+- `xgb_results_summary.txt` - Performance metrics
+- `xgb_confusion_matrix.csv` - Classification details
+- `xgb_roc_curve.png` - ROC curve visualization
 
-### Testing
+## 📝 Recent Updates
 
-- **Frontend**: Use `npm run dev` for development with hot reload
-- **Backend**: Restart Python server after code changes
-- **Integration**: Test full workflow from recording to results display
+- ✅ Reversed questionnaire scoring (Yes=0, No=2)
+- ✅ Added pretest support for age 9-12
+- ✅ Chronological test results display
+- ✅ Gemini AI personalized recommendations
+- ✅ "Areas of Improvement" section
+- ✅ Enhanced risk calculation with decision trees
 
-## License
+## 🔮 Future Enhancements
+
+- [ ] Integrate XGBoost model for live predictions
+- [ ] Add longitudinal progress tracking
+- [ ] Export PDF reports
+- [ ] Multi-language support
+- [ ] Mobile app version
+- [ ] Teacher dashboard
+
+## 📄 License
 
 This project is open source and available under the MIT License.
 
-## Contributing
+## 👥 Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## Support
+## 📧 Support
 
 For issues and questions:
-1. Check the troubleshooting section
-2. Review browser console and server logs
-3. Ensure all dependencies are properly installed
-4. Verify both frontend and backend are running
+- Check troubleshooting section above
+- Review browser console and server logs
+- Ensure all dependencies are installed
+- Verify both frontend and backend are running
 
+## 🙏 Acknowledgments
+
+- OpenAI Whisper for speech recognition
+- XGBoost for risk classification
+- Google Gemini for personalized recommendations
+- Research community for dyslexia screening methodologies
+
+---
+
+**DYSCOVER** - Making dyslexia screening accessible, accurate, and actionable.

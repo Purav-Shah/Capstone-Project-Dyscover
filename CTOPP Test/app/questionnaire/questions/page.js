@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { AGE_GROUPS, RESPONSE_POINTS, ageToGroup, categorizeRisk } from "../data"
+import { getInitialDarkMode, setDarkMode } from "../../utils/theme"
 
 export default function QuestionnaireQuestionsPage() {
   const router = useRouter()
@@ -32,10 +33,13 @@ export default function QuestionnaireQuestionsPage() {
 
   useEffect(() => {
     setIsVisible(true)
+    setIsDarkMode(getInitialDarkMode())
   }, [])
 
   const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode)
+    const next = !isDarkMode
+    setIsDarkMode(next)
+    setDarkMode(next)
   }
 
   function setAnswer(idx, value) {
@@ -46,7 +50,38 @@ export default function QuestionnaireQuestionsPage() {
     })
   }
 
-  function handleSubmit() {
+  async function ensureAssessmentId() {
+    try {
+      const existing = window.localStorage.getItem("assessmentId")
+      if (existing) return existing
+      const res = await fetch("http://localhost:5000/api/assessments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user: { first, last, age: Number(age), sex },
+          ageGroup: groupKey,
+        }),
+      })
+      const data = await res.json()
+      if (res.ok && data?.assessmentId) {
+        window.localStorage.setItem("assessmentId", data.assessmentId)
+        return data.assessmentId
+      }
+    } catch {}
+    return null
+  }
+
+  async function postQuestionnaireResult(assessmentId, payload) {
+    try {
+      await fetch(`http://localhost:5000/api/assessments/${assessmentId}/results`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "questionnaire", payload }),
+      })
+    } catch {}
+  }
+
+  async function handleSubmit() {
     const score = answers.reduce((sum, a) => sum + (RESPONSE_POINTS[a] ?? 0), 0)
     const result = categorizeRisk(groupKey, score)
 
@@ -64,6 +99,10 @@ export default function QuestionnaireQuestionsPage() {
       }
       const key = "questionnaireResult"
       window.localStorage.setItem(key, JSON.stringify(payload))
+      const assessmentId = await ensureAssessmentId()
+      if (assessmentId) {
+        await postQuestionnaireResult(assessmentId, payload)
+      }
     } catch {}
 
     const qp = new URLSearchParams({ first, last, age: String(age), sex })
@@ -164,7 +203,7 @@ export default function QuestionnaireQuestionsPage() {
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path
                     fillRule="evenodd"
-                    d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
+                    d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zM6.464 14.95l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
                     clipRule="evenodd"
                   />
                 </svg>

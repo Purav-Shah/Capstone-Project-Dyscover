@@ -1,52 +1,55 @@
-DYSCOVER XGBoost Dummy Model Results
 {
   "samples_total": 2004,
-  "test_size": 0.25,
+  "test_size": 0.3,
   "classes": [
     "High Risk",
     "Low Risk",
     "Medium Risk"
   ],
   "metrics": {
-    "AUROC_macro_ovr": 0.950262648645465,
-    "Accuracy": 0.9720558882235529,
-    "Precision_macro": 0.9720920905435738,
-    "Sensitivity_macro_recall": 0.9721152932230778,
-    "Specificity_macro": 0.9860218785234425,
-    "F1_macro": 0.971980203576264
+    "AUROC_macro_ovr": 0.9883009722790868,
+    "Accuracy": 0.9352159468438538,
+    "Precision_macro": 0.9352101876854352,
+    "Sensitivity_macro_recall": 0.935240464344942,
+    "Specificity_macro": 0.9676058609694668,
+    "F1_macro": 0.9351981363232409,
+    "Precision_weighted": 0.9352012443769293,
+    "Sensitivity_weighted_recall": 0.9352159468438538,
+    "F1_weighted": 0.9351813996197232
   },
   "per_class": {
     "High Risk": {
-      "precision": 0.9644970414201184,
-      "recall": 0.9702380952380952,
-      "f1-score": 0.9673590504451038,
-      "support": 168.0
+      "precision": 0.9343434343434344,
+      "recall": 0.9203980099502488,
+      "f1-score": 0.9273182957393483,
+      "support": 201.0
     },
     "Low Risk": {
-      "precision": 0.9753086419753086,
-      "recall": 0.9461077844311377,
-      "f1-score": 0.9604863221884499,
-      "support": 167.0
+      "precision": 0.9306930693069307,
+      "recall": 0.9353233830845771,
+      "f1-score": 0.9330024813895782,
+      "support": 201.0
     },
     "Medium Risk": {
-      "precision": 0.9764705882352941,
-      "recall": 1.0,
-      "f1-score": 0.9880952380952381,
-      "support": 166.0
+      "precision": 0.9405940594059405,
+      "recall": 0.95,
+      "f1-score": 0.945273631840796,
+      "support": 200.0
     },
-    "accuracy": 0.9720558882235529,
+    "accuracy": 0.9352159468438538,
     "macro avg": {
-      "precision": 0.9720920905435738,
-      "recall": 0.9721152932230778,
-      "f1-score": 0.971980203576264,
-      "support": 501.0
+      "precision": 0.9352101876854352,
+      "recall": 0.935240464344942,
+      "f1-score": 0.9351981363232409,
+      "support": 602.0
     },
     "weighted avg": {
-      "precision": 0.9720681912485335,
-      "recall": 0.9720558882235529,
-      "f1-score": 0.9719388139801558,
-      "support": 501.0
+      "precision": 0.9352012443769293,
+      "recall": 0.9352159468438538,
+      "f1-score": 0.9351813996197232,
+      "support": 602.0
     }
   },
-  "confusion_matrix_csv": "C:\\Purav\\Capstone\\analysis\\xgb_confusion_matrix.csv"
+  "confusion_matrix_csv": "C:\\Purav\\Capstone\\analysis\\xgb_medium_confusion_matrix.csv",
+  "roc_curve_png": "C:\\Purav\\Capstone\\analysis\\xgb_medium_roc_curve.png"
 }

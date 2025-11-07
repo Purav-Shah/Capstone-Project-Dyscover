@@ -1,10 +1,11 @@
 // Questionnaire data and scoring thresholds
-// Yes = 2, Sometimes = 1, No = 0
+// Reversed scoring: Yes = 0 (higher risk), Sometimes = 1, No = 2 (lower risk)
+// Lower total score = Higher risk
 
 export const RESPONSE_POINTS = {
-  Yes: 2,
+  Yes: 0,
   Sometimes: 1,
-  No: 0,
+  No: 2,
 };
 
 export const AGE_GROUPS = {
@@ -31,9 +32,9 @@ export const AGE_GROUPS = {
       'Have they had many ear infections or hearing issues?',
     ],
     scoring: [
-      { max: 8, level: 'Low risk' },
-      { min: 9, max: 16, level: 'Medium risk' },
-      { min: 17, level: 'High risk' },
+      { min: 25, level: 'Low risk' },      // High score (25-36) = Low risk
+      { min: 13, max: 24, level: 'Medium risk' },  // Medium score (13-24) = Medium risk
+      { max: 12, level: 'High risk' },     // Low score (0-12) = High risk
     ],
     maxPoints: 18 * 2, // 36
   },
@@ -62,9 +63,9 @@ export const AGE_GROUPS = {
       'Does your child seem to understand better when things are explained verbally rather than in writing?',
     ],
     scoring: [
-      { max: 10, level: 'Low risk' },
-      { min: 11, max: 20, level: 'Medium risk' },
-      { min: 21, level: 'High risk' },
+      { min: 28, level: 'Low risk' },      // High score (28-40) = Low risk
+      { min: 16, max: 27, level: 'Medium risk' },  // Medium score (16-27) = Medium risk
+      { max: 15, level: 'High risk' },     // Low score (0-15) = High risk
     ],
     maxPoints: 20 * 2, // 40
   },
@@ -93,9 +94,9 @@ export const AGE_GROUPS = {
       'Does your child show better understanding when information is given verbally instead of in written form?',
     ],
     scoring: [
-      { max: 12, level: 'Low risk' },
-      { min: 13, max: 24, level: 'Medium risk' },
-      { min: 25, level: 'High risk' },
+      { min: 28, level: 'Low risk' },      // High score (28-40) = Low risk
+      { min: 16, max: 27, level: 'Medium risk' },  // Medium score (16-27) = Medium risk
+      { max: 15, level: 'High risk' },     // Low score (0-15) = High risk
     ],
     maxPoints: 20 * 2, // 40
   },

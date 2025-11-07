@@ -4,6 +4,8 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 import { collectAllTestResults, calculateDyslexiaRisk, saveRiskAssessment } from "../utils/riskCalculator"
 import { DecisionTreeVisualization } from "../utils/decisionTree.js"
+import { getInitialDarkMode, setDarkMode } from "../utils/theme"
+import { generatePersonalizedRecommendations } from "../utils/geminiRecommendations"
 
 export default function ComprehensiveResultsPage() {
   const params = useSearchParams()
@@ -12,6 +14,8 @@ export default function ComprehensiveResultsPage() {
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [testResults, setTestResults] = useState(null)
   const [riskAssessment, setRiskAssessment] = useState(null)
+  const [personalizedRecommendations, setPersonalizedRecommendations] = useState(null)
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false)
 
   const first = params.get("first") || ""
   const last = params.get("last") || ""
@@ -20,27 +24,61 @@ export default function ComprehensiveResultsPage() {
 
   useEffect(() => {
     setIsVisible(true)
+    setIsDarkMode(getInitialDarkMode())
     loadResults()
   }, [])
 
-  const loadResults = () => {
+  const loadResults = async () => {
     try {
-      // Load all test results
-      const results = collectAllTestResults()
+      const assessmentId = typeof window !== 'undefined' ? window.localStorage.getItem('assessmentId') : null
+      let results = null
+      if (assessmentId) {
+        try {
+          const res = await fetch(`http://localhost:5000/api/assessments/${assessmentId}`)
+          if (res.ok) {
+            const doc = await res.json()
+            results = doc?.results || null
+          }
+        } catch (_) {}
+      }
+
+      if (!results) {
+        results = collectAllTestResults()
+      }
       setTestResults(results)
 
-      // Always compute current overall risk from latest results and demographics
-      const demographics = { age: Number(age), sex }
-      const computed = calculateDyslexiaRisk(results, demographics)
+      const demographics = { age: Number(age), sex, first, last }
+      const computed = calculateDyslexiaRisk(results || {}, demographics)
       saveRiskAssessment(computed)
       setRiskAssessment(computed)
+      
+      // Fetch personalized recommendations
+      if (results && computed) {
+        setLoadingRecommendations(true)
+        try {
+          const personalized = await generatePersonalizedRecommendations(
+            results,
+            computed,
+            demographics
+          )
+          if (personalized) {
+            setPersonalizedRecommendations(personalized)
+          }
+        } catch (error) {
+          console.error('Error fetching personalized recommendations:', error)
+        } finally {
+          setLoadingRecommendations(false)
+        }
+      }
     } catch (error) {
       console.error('Error loading results:', error)
     }
   }
 
   const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode)
+    const next = !isDarkMode
+    setIsDarkMode(next)
+    setDarkMode(next)
   }
 
   const getScoreColor = (score, maxScore) => {
@@ -62,13 +100,78 @@ export default function ComprehensiveResultsPage() {
   // Determine applicable tests by age
   const getApplicableTests = () => {
     const a = Number(age)
-    if (a >= 3 && a <= 5) return ['questionnaire', 'pattern']
+    if (a >= 3 && a <= 5) return ['questionnaire', 'pretest', 'phoneme', 'nonsense', 'pattern']
     if (a >= 6 && a <= 8) return ['questionnaire', 'phoneme', 'pattern', 'reading']
-    if (a >= 9 && a <= 12) return ['questionnaire', 'phoneme', 'reading', 'nonsense']
+    if (a >= 9 && a <= 12) return ['questionnaire', 'pretest', 'phoneme', 'reading', 'nonsense']
     return ['questionnaire']
   }
 
   const applicableTests = getApplicableTests()
+
+  // Sort test results by savedAt timestamp (chronological order)
+  const getSortedTestResults = () => {
+    if (!testResults) return []
+    
+    const testItems = []
+    
+    // Map test types to their display components
+    if (applicableTests.includes('questionnaire') && testResults.questionnaire) {
+      testItems.push({
+        type: 'questionnaire',
+        savedAt: testResults.questionnaire.savedAt || '',
+        component: 'questionnaire'
+      })
+    }
+    
+    if (applicableTests.includes('pretest') && testResults.pretest) {
+      testItems.push({
+        type: 'pretest',
+        savedAt: testResults.pretest.savedAt || '',
+        component: 'pretest'
+      })
+    }
+    
+    if (applicableTests.includes('phoneme') && testResults.phoneme) {
+      testItems.push({
+        type: 'phoneme',
+        savedAt: testResults.phoneme.savedAt || '',
+        component: 'phoneme'
+      })
+    }
+    
+    if (applicableTests.includes('pattern') && testResults.pattern) {
+      testItems.push({
+        type: 'pattern',
+        savedAt: testResults.pattern.savedAt || '',
+        component: 'pattern'
+      })
+    }
+    
+    if (applicableTests.includes('reading') && testResults.reading) {
+      testItems.push({
+        type: 'reading',
+        savedAt: testResults.reading.savedAt || '',
+        component: 'reading'
+      })
+    }
+    
+    if (applicableTests.includes('nonsense') && testResults.nonsense) {
+      testItems.push({
+        type: 'nonsense',
+        savedAt: testResults.nonsense.savedAt || '',
+        component: 'nonsense'
+      })
+    }
+    
+    // Sort by savedAt timestamp (chronological order)
+    return testItems.sort((a, b) => {
+      const timeA = a.savedAt ? new Date(a.savedAt).getTime() : 0
+      const timeB = b.savedAt ? new Date(b.savedAt).getTime() : 0
+      return timeA - timeB
+    })
+  }
+
+  const sortedTestResults = getSortedTestResults()
 
   return (
     <div
@@ -202,21 +305,32 @@ export default function ComprehensiveResultsPage() {
               )}
 
               {/* Recommendations */}
-              {riskAssessment.recommendations && (
+              {(riskAssessment.recommendations || personalizedRecommendations) && (
                 <div className="mt-6">
                   <h4 className={`text-lg font-semibold mb-3 ${isDarkMode ? "text-white" : "text-slate-900"}`}>
-                    Recommendations
+                    {personalizedRecommendations ? "Areas of Improvement" : "Recommendations"}
                   </h4>
-                  <ul className="space-y-2">
-                    {riskAssessment.recommendations.map((rec, index) => (
-                      <li key={index} className={`text-sm flex items-start ${
-                        isDarkMode ? "text-slate-300" : "text-slate-600"
-                      }`}>
-                        <span className="text-blue-500 mr-2 mt-0.5">•</span>
-                        {rec}
-                      </li>
-                    ))}
-                  </ul>
+                  
+                  {loadingRecommendations ? (
+                    <div className={`flex items-center space-x-2 ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>
+                      <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span className="text-sm">Generating personalized recommendations...</span>
+                    </div>
+                  ) : (
+                    <ul className="space-y-2">
+                      {(personalizedRecommendations || riskAssessment.recommendations || []).map((rec, index) => (
+                        <li key={index} className={`text-sm flex items-start ${
+                          isDarkMode ? "text-slate-300" : "text-slate-600"
+                        }`}>
+                          <span className="text-blue-500 mr-2 mt-0.5">•</span>
+                          <span>{rec}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               )}
             </div>
@@ -231,137 +345,166 @@ export default function ComprehensiveResultsPage() {
                 Individual Test Results
               </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Questionnaire Results */}
-                {applicableTests.includes('questionnaire') && testResults.questionnaire && (
-                  <div className={`p-6 rounded-2xl ${
-                    isDarkMode ? "bg-slate-700/50" : "bg-slate-100"
-                  }`}>
-                    <h3 className="text-lg font-semibold mb-3">Questionnaire</h3>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm">Score:</span>
-                        <span className={`font-bold ${getScoreColor(testResults.questionnaire.score, testResults.questionnaire.maxPoints || 40)}`}>
-                          {testResults.questionnaire.score}/{testResults.questionnaire.maxPoints || 40}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">Risk Level:</span>
-                        <span className="font-medium">{testResults.questionnaire.level}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">Age Group:</span>
-                        <span className="font-medium">{testResults.questionnaire.group}</span>
-                      </div>
+              <div className="grid grid-cols-1 gap-6">
+                {sortedTestResults.map((testItem, index) => {
+                  const renderTestResult = () => {
+                    switch (testItem.type) {
+                      case 'questionnaire':
+                        return (
+                          <div className={`p-6 rounded-2xl ${
+                            isDarkMode ? "bg-slate-700/50" : "bg-slate-100"
+                          }`}>
+                            <h3 className="text-lg font-semibold mb-3">Questionnaire</h3>
+                            <div className="space-y-2">
+                              <div className="flex justify-between">
+                                <span className="text-sm">Score:</span>
+                                <span className={`font-bold ${getScoreColor(testResults.questionnaire.score, testResults.questionnaire.maxPoints || 40)}`}>
+                                  {testResults.questionnaire.score}/{testResults.questionnaire.maxPoints || 40}
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-sm">Risk Level:</span>
+                                <span className="font-medium">{testResults.questionnaire.level}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-sm">Age Group:</span>
+                                <span className="font-medium">{testResults.questionnaire.group}</span>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      
+                      case 'pretest':
+                        return (
+                          <div className={`p-6 rounded-2xl ${
+                            isDarkMode ? "bg-slate-700/50" : "bg-slate-100"
+                          }`}>
+                            <h3 className="text-lg font-semibold mb-3">Pretest</h3>
+                            <div className="space-y-2">
+                              <div className="flex justify-between">
+                                <span className="text-sm">Score:</span>
+                                <span className={`font-bold ${getScoreColor(testResults.pretest.score, testResults.pretest.total)}`}>
+                                  {testResults.pretest.score}/{testResults.pretest.total}
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-sm">Accuracy:</span>
+                                <span className="font-medium">
+                                  {Math.round((testResults.pretest.score / testResults.pretest.total) * 100)}%
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      
+                      case 'phoneme':
+                        return (
+                          <div className={`p-6 rounded-2xl ${
+                            isDarkMode ? "bg-slate-700/50" : "bg-slate-100"
+                          }`}>
+                            <h3 className="text-lg font-semibold mb-3">Phoneme Test</h3>
+                            <div className="space-y-2">
+                              <div className="flex justify-between">
+                                <span className="text-sm">Score:</span>
+                                <span className={`font-bold ${getScoreColor(testResults.phoneme.score, testResults.phoneme.total)}`}>
+                                  {testResults.phoneme.score}/{testResults.phoneme.total}
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-sm">Accuracy:</span>
+                                <span className="font-medium">
+                                  {Math.round((testResults.phoneme.score / testResults.phoneme.total) * 100)}%
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      
+                      case 'pattern':
+                        return (
+                          <div className={`p-6 rounded-2xl ${
+                            isDarkMode ? "bg-slate-700/50" : "bg-slate-100"
+                          }`}>
+                            <h3 className="text-lg font-semibold mb-3">Pattern Recognition</h3>
+                            <div className="space-y-2">
+                              <div className="flex justify-between">
+                                <span className="text-sm">Score:</span>
+                                <span className={`font-bold ${getScoreColor(testResults.pattern.score, testResults.pattern.total)}`}>
+                                  {testResults.pattern.score}/{testResults.pattern.total}
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-sm">Accuracy:</span>
+                                <span className="font-medium">
+                                  {Math.round((testResults.pattern.score / testResults.pattern.total) * 100)}%
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      
+                      case 'reading':
+                        return (
+                          <div className={`p-6 rounded-2xl ${
+                            isDarkMode ? "bg-slate-700/50" : "bg-slate-100"
+                          }`}>
+                            <h3 className="text-lg font-semibold mb-3">Reading Test</h3>
+                            <div className="space-y-2">
+                              <div className="flex justify-between">
+                                <span className="text-sm">WPM:</span>
+                                <span className="font-bold">{testResults.reading.wpm}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-sm">Errors:</span>
+                                <span className="font-bold text-red-600">{testResults.reading.errorCount}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-sm">Correct:</span>
+                                <span className="font-bold text-green-600">{testResults.reading.correctWords}</span>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      
+                      case 'nonsense':
+                        return (
+                          <div className={`p-6 rounded-2xl ${
+                            isDarkMode ? "bg-slate-700/50" : "bg-slate-100"
+                          }`}>
+                            <h3 className="text-lg font-semibold mb-3">Nonsense Words</h3>
+                            <div className="space-y-2">
+                              <div className="flex justify-between">
+                                <span className="text-sm">Score:</span>
+                                <span className={`font-bold ${getScoreColor(testResults.nonsense.score, testResults.nonsense.total)}`}>
+                                  {testResults.nonsense.score}/{testResults.nonsense.total}
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-sm">Accuracy:</span>
+                                <span className="font-medium">
+                                  {Math.round((testResults.nonsense.score / testResults.nonsense.total) * 100)}%
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      
+                      default:
+                        return null
+                    }
+                  }
+                  
+                  return (
+                    <div key={`${testItem.type}-${index}`}>
+                      {renderTestResult()}
                     </div>
-                  </div>
-                )}
-
-                {/* Phoneme Results */}
-                {applicableTests.includes('phoneme') && testResults.phoneme && (
-                  <div className={`p-6 rounded-2xl ${
-                    isDarkMode ? "bg-slate-700/50" : "bg-slate-100"
-                  }`}>
-                    <h3 className="text-lg font-semibold mb-3">Phoneme Test</h3>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm">Score:</span>
-                        <span className={`font-bold ${getScoreColor(testResults.phoneme.score, testResults.phoneme.total)}`}>
-                          {testResults.phoneme.score}/{testResults.phoneme.total}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">Accuracy:</span>
-                        <span className="font-medium">
-                          {Math.round((testResults.phoneme.score / testResults.phoneme.total) * 100)}%
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Pattern Recognition Results */}
-                {applicableTests.includes('pattern') && testResults.pattern && (
-                  <div className={`p-6 rounded-2xl ${
-                    isDarkMode ? "bg-slate-700/50" : "bg-slate-100"
-                  }`}>
-                    <h3 className="text-lg font-semibold mb-3">Pattern Recognition</h3>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm">Score:</span>
-                        <span className={`font-bold ${getScoreColor(testResults.pattern.score, testResults.pattern.total)}`}>
-                          {testResults.pattern.score}/{testResults.pattern.total}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">Accuracy:</span>
-                        <span className="font-medium">
-                          {Math.round((testResults.pattern.score / testResults.pattern.total) * 100)}%
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Reading Results */}
-                {applicableTests.includes('reading') && testResults.reading && (
-                  <div className={`p-6 rounded-2xl ${
-                    isDarkMode ? "bg-slate-700/50" : "bg-slate-100"
-                  }`}>
-                    <h3 className="text-lg font-semibold mb-3">Reading Test</h3>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm">WPM:</span>
-                        <span className="font-bold">{testResults.reading.wpm}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">Errors:</span>
-                        <span className="font-bold text-red-600">{testResults.reading.errorCount}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">Correct:</span>
-                        <span className="font-bold text-green-600">{testResults.reading.correctWords}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Nonsense Word Results */}
-                {applicableTests.includes('nonsense') && testResults.nonsense && (
-                  <div className={`p-6 rounded-2xl ${
-                    isDarkMode ? "bg-slate-700/50" : "bg-slate-100"
-                  }`}>
-                    <h3 className="text-lg font-semibold mb-3">Nonsense Words</h3>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm">Score:</span>
-                        <span className={`font-bold ${getScoreColor(testResults.nonsense.score, testResults.nonsense.total)}`}>
-                          {testResults.nonsense.score}/{testResults.nonsense.total}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">Accuracy:</span>
-                        <span className="font-medium">
-                          {Math.round((testResults.nonsense.score / testResults.nonsense.total) * 100)}%
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                  )
+                })}
               </div>
             </div>
           )}
 
-          {/* Decision Tree Visualization */}
-          {testResults && riskAssessment && (
-            <div className="mb-8">
-              <div 
-                dangerouslySetInnerHTML={{ 
-                  __html: DecisionTreeVisualization({ testResults, riskAssessment, applicableTests })?.html || '' 
-                }} 
-              />
-            </div>
-          )}
+          {/* Decision Tree Visualization (hidden for users) */}
 
           {/* Action Buttons */}
           <div className="mt-8 text-center">

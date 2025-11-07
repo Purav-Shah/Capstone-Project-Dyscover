@@ -36,7 +36,7 @@ DYSCOVER is a full-stack web application that helps parents and educators identi
 ## 📊 Assessment Metrics
 
 ### Questionnaire Scoring
-- **Reversed Scoring System**: 
+- **Scoring System**: 
   - Yes = 0 points (indicates concern)
   - Sometimes = 1 point
   - No = 2 points (indicates no concern)

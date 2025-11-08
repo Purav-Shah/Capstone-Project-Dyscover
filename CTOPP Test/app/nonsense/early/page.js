@@ -140,26 +140,33 @@ export default function EarlyNonsensePage() {
             <h1 className={`text-2xl font-semibold mb-6 ${isDarkMode ? "text-white" : "text-slate-900"}`}>
               Nonsense Words
             </h1>
-            <div className={`text-lg md:text-xl font-medium mb-6 ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}>
-              {item.prompt}
+            <div className={`text-lg md:text-xl font-medium mb-8 ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}>
+              Listen to the word and select the most appropriate one
             </div>
-            <div className="flex flex-wrap items-center justify-center gap-4 mb-4">
-              {opts.map((opt, i) => (
-                <button
-                  key={i}
-                  onClick={() => speak(opt)}
-                  className={`px-4 py-2 rounded transition-all ${isDarkMode ? "bg-slate-700 text-white hover:bg-slate-600" : "bg-slate-200 text-slate-900 hover:bg-slate-300"}`}
-                >
-                  🔊 {opt}
-                </button>
-              ))}
+            
+            {/* Speaker Button */}
+            <div className="mb-8">
+              <button
+                onClick={() => speak(item.correct)}
+                className={`px-8 py-4 rounded-full transition-all duration-300 hover:scale-110 shadow-lg ${
+                  isDarkMode 
+                    ? "bg-blue-600 text-white hover:bg-blue-700" 
+                    : "bg-blue-500 text-white hover:bg-blue-600"
+                }`}
+              >
+                <svg className="w-8 h-8 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.793L4.383 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.383l4.617-3.793a1 1 0 011.383.07zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" />
+                </svg>
+              </button>
             </div>
+
+            {/* Selection Options */}
             <div className="flex flex-wrap items-center justify-center gap-4">
               {opts.map((opt, i) => (
                 <button
                   key={i}
                   onClick={() => choose(opt)}
-                  className="px-5 py-3 rounded-full bg-indigo-600 text-white hover:bg-indigo-700 transition-all"
+                  className="px-6 py-3 rounded-full bg-indigo-600 text-white hover:bg-indigo-700 transition-all font-medium text-lg"
                 >
                   {opt}
                 </button>

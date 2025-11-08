@@ -88,8 +88,17 @@ export async function generatePersonalizedRecommendations(testResults, riskAsses
       return null;
     }
 
-    const age = demographics.age;
+    const age = Number(demographics.age);
     const ageGroup = getAgeGroup(age);
+    
+    // Ensure Gemini recommendations work for all age groups (3-5, 6-8, 9-12)
+    if (!ageGroup || (age < 3 || age > 12)) {
+      console.warn(`Age ${age} is outside supported range (3-12). Skipping personalized recommendations.`);
+      return null;
+    }
+    
+    console.log(`Generating Gemini recommendations for age ${age} (${ageGroup} age group)`);
+    
     const normalizedScores = riskAssessment.breakdown || {};
     
     // Analyze weak areas
@@ -199,12 +208,13 @@ Test Results:`;
     prompt += `\n\nPretest: ${testResults.pretest.score}/${testResults.pretest.total} correct`;
   }
   
-  prompt += `\n\nPlease provide 4-6 specific, actionable, and age-appropriate recommendations for this child. Focus on:
+  prompt += `\n\nPlease provide 4-6 specific, actionable, and age-appropriate recommendations for this child in the ${ageGroup} age group. Focus on:
 1. Addressing the specific weak areas identified
 2. Building on their strengths
-3. Age-appropriate interventions and activities
+3. Age-appropriate interventions and activities (considering they are ${age} years old)
 4. Parent-friendly language
 5. Practical steps that can be taken at home or school
+6. For children in the 9-12 age group, include recommendations appropriate for middle school students
 
 Format your response as a numbered list, with each recommendation on a new line starting with a number and period (e.g., "1. ..."). Do not include any additional text or explanations, just the numbered recommendations.`;
 
@@ -255,12 +265,13 @@ function parseRecommendations(text) {
 
 /**
  * Get age group from age
+ * Supports all age groups: 3-5, 6-8, 9-12
  */
 function getAgeGroup(age) {
   const a = Number(age);
   if (a >= 3 && a <= 5) return '3-5';
   if (a >= 6 && a <= 8) return '6-8';
-  if (a >= 9 && a <= 12) return '9-12';
-  return '6-8';
+  if (a >= 9 && a <= 12) return '9-12'; // Supports age 9-12 for Gemini recommendations
+  return null; // Return null for unsupported ages
 }
 

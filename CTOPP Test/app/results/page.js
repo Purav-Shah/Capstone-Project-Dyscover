@@ -37,14 +37,34 @@ export default function ComprehensiveResultsPage() {
           const res = await fetch(`http://localhost:5000/api/assessments/${assessmentId}`)
           if (res.ok) {
             const doc = await res.json()
-            results = doc?.results || null
+            const rawResults = doc?.results || null
+            if (rawResults) {
+              // Normalize MongoDB results to match expected structure
+              results = normalizeMongoResults(rawResults, Number(age))
+              console.log('Loaded from MongoDB:', { rawResults, normalized: results })
+            }
           }
-        } catch (_) {}
+        } catch (error) {
+          console.error('Error loading from MongoDB:', error)
+        }
       }
 
       if (!results) {
         results = collectAllTestResults()
+        console.log('Loaded from localStorage:', results)
+      } else {
+        // Merge localStorage data with MongoDB data to ensure completeness
+        // Prioritize MongoDB data, but fill in any missing tests from localStorage
+        const localResults = collectAllTestResults()
+        // Only merge in localStorage data if MongoDB doesn't have that test
+        for (const key in localResults) {
+          if (!results[key] && localResults[key]) {
+            results[key] = localResults[key]
+          }
+        }
+        console.log('Merged results (MongoDB + localStorage):', results)
       }
+      
       setTestResults(results)
 
       const demographics = { age: Number(age), sex, first, last }
@@ -56,13 +76,21 @@ export default function ComprehensiveResultsPage() {
       if (results && computed) {
         setLoadingRecommendations(true)
         try {
+          console.log('Attempting to generate Gemini recommendations...', { 
+            hasResults: !!results, 
+            hasComputed: !!computed,
+            demographics 
+          })
           const personalized = await generatePersonalizedRecommendations(
             results,
             computed,
             demographics
           )
-          if (personalized) {
+          console.log('Gemini recommendations result:', personalized)
+          if (personalized && personalized.length > 0) {
             setPersonalizedRecommendations(personalized)
+          } else {
+            console.warn('No personalized recommendations returned from Gemini')
           }
         } catch (error) {
           console.error('Error fetching personalized recommendations:', error)
@@ -95,6 +123,38 @@ export default function ComprehensiveResultsPage() {
       case 'Low Risk': return 'text-green-600 bg-green-50 border-green-200'
       default: return 'text-gray-600 bg-gray-50 border-gray-200'
     }
+  }
+
+  // Normalize MongoDB results to match expected structure
+  const normalizeMongoResults = (rawResults, age) => {
+    const normalized = { ...rawResults }
+    const ageGroup = age >= 3 && age <= 5 ? '3-5' : age >= 6 && age <= 8 ? '6-8' : age >= 9 && age <= 12 ? '9-12' : null
+    
+    // For age 6-8, pretest is stored as 'pretest' in MongoDB but should be 'pattern' in results
+    if (ageGroup === '6-8') {
+      if (rawResults.pretest && !rawResults.pattern) {
+        normalized.pattern = rawResults.pretest
+      }
+      // Also check if pattern exists directly (for backwards compatibility)
+      if (rawResults.pattern && !normalized.pattern) {
+        normalized.pattern = rawResults.pattern
+      }
+    }
+    
+    // Ensure phoneme data is preserved (it's stored as 'phoneme' in MongoDB)
+    // No transformation needed for phoneme - it's already in the correct format
+    
+    // Log what we have for debugging
+    console.log('Normalized MongoDB results:', {
+      raw: rawResults,
+      normalized: normalized,
+      hasPhoneme: !!normalized.phoneme,
+      hasPattern: !!normalized.pattern,
+      hasReading: !!normalized.reading,
+      hasQuestionnaire: !!normalized.questionnaire
+    })
+    
+    return normalized
   }
 
   // Determine applicable tests by age
